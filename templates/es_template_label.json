@@ -1,0 +1,54 @@
+{
+    "index_patterns": [
+        "vinlab_labels*"
+    ],
+    "template": {
+        "settings": {
+            "number_of_shards": 1,
+            "number_of_replicas": 1
+        },
+        "mappings": {
+            "_source": {
+                "enabled": true
+            },
+            "properties": {
+                "id": {
+                    "type": "text"
+                },
+                "type": {
+                    "type": "keyword"
+                },
+                "scope": {
+                    "type": "keyword"
+                },
+                "annotation_type": {
+                    "type": "keyword"
+                },
+                "name": {
+                    "type": "text"
+                },
+                "short_name": {
+                    "type": "text"
+                },
+                "parent_label_id": {
+                    "type": "text"
+                },
+                "description": {
+                    "type": "text"
+                },
+                "color": {
+                    "type": "text"
+                },
+                "creator_id": {
+                    "type": "text"
+                },
+                "label_group_id": {
+                    "type": "text"
+                },
+                "created": {
+                    "type": "long"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "properties": {
+        "data": {
+            "enabled": false
+        },
+        "meta.data_spacing": {
+            "enabled": false
+        },
+        "meta.data_origin": {
+            "enabled": false
+        }
+    }
+}

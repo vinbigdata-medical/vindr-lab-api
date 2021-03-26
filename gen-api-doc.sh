@@ -1,0 +1,1 @@
+npx redoc-cli bundle api-doc.yml

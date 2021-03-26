@@ -1,0 +1,39 @@
+{
+    "index_patterns": [
+        "vinlab_studies*"
+    ],
+    "template": {
+        "settings": {
+            "number_of_shards": 1,
+            "number_of_replicas": 1
+        },
+        "mappings": {
+            "_source": {
+                "enabled": true
+            },
+            "properties": {
+                "id": {
+                    "type": "text"
+                },
+                "modified": {
+                    "type": "long"
+                },
+                "time_inserted": {
+                    "type": "long"
+                },
+                "code": {
+                    "type": "text"
+                },
+                "status": {
+                    "type": "keyword"
+                },
+                "project_id": {
+                    "type": "text"
+                },
+                "dicom_tags.StudyInstanceUID": {
+                    "type": "keyword"
+                }
+            }
+        }
+    }
+}

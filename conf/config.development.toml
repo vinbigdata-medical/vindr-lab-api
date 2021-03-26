@@ -1,0 +1,36 @@
+[webserver]
+port = 8088
+
+[elasticsearch]
+uris = ["YOUR_ES_URI"]
+annotation_index_prefix = "YOUR_STUDIES_INDEX"
+label_index_prefix = "YOUR_LABEL_INDEX"
+study_index_prefix = "YOUR_STUDY_INDEX"
+project_index_prefix = "YOUR_PROJECT_INDEX"
+label_export_index_prefix = "YOUR_LABEL_EXPORT_INDEX"
+object_index_prefix = "YOUR_OBJECT_INDEX"
+session_index_alias = "YOUR_SESSION_INDEX"
+label_group_index_prefix = "YOUR_LABEL_GROUP_INDEX"
+task_index_prefix = "YOUR_TASK _INDEX"
+
+[minio]
+uri = "YOUR_MINIO_URI"
+access_key_id="YOUR_MINIO_KEY_ID"
+secret_access_key="YOUR_MINIO_ACCESS_KEY"
+bucket_name="YOUR_MINIO_BUCKET"
+
+[keycloak]
+uri = "YOUR_KEYCLOAK_URI"
+master_realm = "master"
+app_realm = "YOUR_REALM"
+admin_username = "YOUR_KEYCLOAK_USERNAME"
+admin_password = "YOUR_KEYCLOAK_PASSWORD"
+
+[orthanc]
+uri = "YOUR_ORTHANC_URI"
+
+[redis]
+uri = "YOUR_REDIS_URI"
+
+[id_generator]
+uri = "YOUR_IDGEN_URI"

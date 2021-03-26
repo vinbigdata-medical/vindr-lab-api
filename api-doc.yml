@@ -1,0 +1,2045 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: VinDr Lab API Document
+  contact:
+    name: VinDr Lab Development Team
+  license:
+    name: MIT
+paths:
+  /labels:
+    get:
+      description: get Labels by array
+      operationId: fetchLabels
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: label_group_id
+          in: query
+          required: false
+          style: form
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+        - name: project_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: get labels response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          impression:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/Label"
+                          finding:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/Label"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      description: |
+        create a new Label
+
+        id of object can be empty
+      operationId: createLabel
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Label"
+      responses:
+        "200":
+          description: get labels response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          label_id:
+                            type: string
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /labels/{label_id}:
+    put:
+      description: update a Label by its id
+      operationId: updateLabel
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: label_id
+          in: path
+          description: ID of Label to update
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Label"
+      responses:
+        "200":
+          description: get labels response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          label_id:
+                            type: string
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      description: delete a Label by its id
+      operationId: deleteLabel
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: label_id
+          in: path
+          description: ID of Label to delete
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: get labels response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          label_id:
+                            type: string
+                            format: uuid
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /annotations:
+    get:
+      description: get all annotations by queried params
+      operationId: fetchAnnotations
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: object_id
+          in: query
+          description: id of Object that Annotation belongs to
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: study_instance_uid
+          in: query
+          description: id of Study that Annotation belongs to
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: series_instance_uid
+          in: query
+          description: id of Series that Annotation belongs to
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: sop_instance_uid
+          in: query
+          description: id of Instance that Annotation belongs to
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: get annotations response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/AnnotationExtend"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      description: create new Annotation
+      deprecated: true
+      operationId: createAnnotation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Annotation"
+      responses:
+        "200":
+          description: get labels response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          label_id:
+                            type: string
+                            format: uuid
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /annotations/{annotation_id}:
+    put:
+      description: update a Annotation by its id
+      operationId: updateAnnotation
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: annotation_id
+          in: path
+          description: ID of Annotation to fetch
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Annotation"
+      responses:
+        "200":
+          description: get labels response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          annotation_id:
+                            type: string
+                            format: uuid
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      description: delete a Annotation by its id
+      operationId: deleteAnnotation
+      parameters:
+        - name: annotation_id
+          in: path
+          description: delte an Annotation by its id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/authParam"
+      responses:
+        "200":
+          description: get labels response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          annotation_id:
+                            type: string
+                            format: uuid
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /projects:
+    get:
+      description: get list by queried parameters
+      operationId: fetchProjects
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      responses:
+        "200":
+          description: get projects response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Project"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      description: get list by queried parameters
+      operationId: createProject
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Project"
+      responses:
+        "200":
+          description: get projects response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Project"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /projects/{project_id}:
+    get:
+      description: get a Project by its id
+      operationId: getProject
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: project_id
+          in: path
+          description: ID of Project
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: get project response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        $ref: "#/components/schemas/Project"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      description: update a Project by its id
+      operationId: updateProject
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: project_id
+          in: path
+          description: ID of Project
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Project"
+      responses:
+        "200":
+          description: get response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      description: delete a Project by its id
+      operationId: deleteProject
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: project_id
+          in: path
+          description: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /projects/{project_id}/people:
+    post:
+      description: add people to project
+      operationId: addPeopleToProject
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: project_id
+          in: path
+          description: ID of Project
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                people:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/ProjectPerson"
+      responses:
+        "200":
+          description: get project response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        properties:
+                          people:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/ProjectPerson"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      description: update people of project only 'people' field is accepted
+      operationId: updatePeopleOfProject
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: project_id
+          in: path
+          description: ID of Project
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                people:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/ProjectPerson"
+      responses:
+        "200":
+          description: get project response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        properties:
+                          people:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/ProjectPerson"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /studies:
+    get:
+      operationId: fetchStudies
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - $ref: "#/components/parameters/limitParam"
+        - $ref: "#/components/parameters/offsetParam"
+        - $ref: "#/components/parameters/sortParam"
+        - $ref: "#/components/parameters/queryParam"
+        - $ref: "#/components/parameters/aggParam"
+      responses:
+        "200":
+          description: get studies response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Study"
+                      agg:
+                        $ref: "#/components/schemas/MapStringToInt"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /studies/upload:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      description: create a study
+      operationId: createStudy
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                  format: uuid
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          _id:
+                            type: string
+                            format: uuid
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /studies/delete_many:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      description: delete many Studies, limit by 100
+      operationId: deleteStudies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        "200":
+          description: response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /studies/{study_id}:
+    put:
+      description: update Study
+      operationId: updateStudy
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: study_id
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Study"
+      responses:
+        "200":
+          description: get labels response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      description: delete a Study by its id
+      operationId: deleteStudy
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: study_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: get labels response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /tasks:
+    get:
+      operationId: fetchTasks
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - $ref: "#/components/parameters/limitParam"
+        - $ref: "#/components/parameters/offsetParam"
+        - $ref: "#/components/parameters/sortParam"
+        - $ref: "#/components/parameters/queryParam"
+        - $ref: "#/components/parameters/aggParam"
+        - $ref: "#/components/parameters/roleParam"
+      responses:
+        "200":
+          description: get tasks response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Task"
+                      agg:
+                        $ref: "#/components/schemas/MapStringToInt"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      description: create Task
+      operationId: createTask
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskSubmit"
+      responses:
+        "200":
+          description: get response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /tasks/assign:
+    post:
+      description: create Task
+      operationId: createTaskv2
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskAssignment"
+      responses:
+        "200":
+          description: get response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /tasks/delete_many:
+    post:
+      description: delete many Tasks, limit by 10 tasks
+      operationId: deleteTasks
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        "200":
+          description: delete tasks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /tasks/update_status_many:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      description: update many tasks's status, limit by 100
+      operationId: updateStatusTasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                status:
+                  type: string
+                  enum: [NEW, DOING, COMPLETED]
+      responses:
+        "200":
+          description: response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /tasks/{task_id}:
+    get:
+      operationId: getTask
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: get tasks response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        $ref: "#/components/schemas/Task"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      description: update Task
+      operationId: updateTask
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Task"
+      responses:
+        "200":
+          description: update task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      description: delete Task
+      operationId: deleteTask
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: delete task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /tasks/{task_id}/status:
+    put:
+      description: update Task status
+      operationId: updateTaskStatus
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Task"
+      responses:
+        "200":
+          description: update task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /tasks/{task_id}/archive:
+    put:
+      description: update Task archive status
+      operationId: updateTaskArchiveStatus
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Task"
+      responses:
+        "200":
+          description: update task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /tasks/{task_id}/annotations:
+    put:
+      description: set many Annotations and Task comment
+      operationId: setAnnotations
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                annotations:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Annotation"
+                comment:
+                  type: string
+
+      responses:
+        "200":
+          description: update task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /objects:
+    get:
+      operationId: fetchObjects
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      responses:
+        "200":
+          description: get studies response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Object"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      description: create an Object
+      operationId: createObject
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ObjectBig"
+      responses:
+        "200":
+          description: get response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /objects/{object_id}:
+    put:
+      description: update Object
+      operationId: updateObject
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: object_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Object"
+      responses:
+        "200":
+          description: update Object
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          _id:
+                            type: string
+                            format: uuid
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /stats/label_exports:
+    get:
+      description: old /label_exports
+      operationId: fetchLabelExports
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - $ref: "#/components/parameters/limitParam"
+        - $ref: "#/components/parameters/offsetParam"
+        - $ref: "#/components/parameters/sortParam"
+        - $ref: "#/components/parameters/queryParam"
+      responses:
+        "200":
+          description: list all exported files
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/LabelExport"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      description: create an LabelExport, old /label_exports
+      operationId: createLabelExport
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelExport"
+      responses:
+        "200":
+          description: get response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /stats/label_exports/download/{label_export_id}:
+    get:
+      description: download export file, old=/label_exports/download/{label_export_id}
+      operationId: downloadLabelExport
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: label_export_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /stats/agg_labels:
+    get:
+      description: aggreagate label, old=/label_exports/stats/agg_labels
+      operationId: aggreagateLabel
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      responses:
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /stats/projects_by_role:
+    get:
+      description: get projects by role including agg stats, old=/label_exports/stats/projects_by_role
+      operationId: getProjectsByRole
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      responses:
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /stats/studies/{study_id}/assignee:
+    get:
+      description: get list assignee of study
+      operationId: getAssigneeOfStudy
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      responses:
+        "200":
+          description: get response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      assignee_ids:
+                        type: array
+                        items:
+                          type: string
+                          format: uuid
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /sessions:
+    post:
+      description: create session, client only have to pass data
+      operationId: createSession
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Session"
+      responses:
+        "200":
+          description: get response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /sessions/{session_id}:
+    get:
+      description: get session
+      operationId: getSession
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: get session
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/SessionItem"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /label_groups:
+    get:
+      description: get LabelGroups by array
+      operationId: fetchLabelGroups
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      responses:
+        "200":
+          description: get LabelGroups response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/LabelGroup"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      description: |
+        create a new LabelGroup
+
+        id of object can be empty
+      operationId: createLabelGroup
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelGroup"
+      responses:
+        "200":
+          description: get LabelGroup response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /label_groups/{label_group_id}:
+    put:
+      description: update LabelGroup
+      operationId: updateLabelGroup
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: label_group_id
+          schema:
+            type: string
+          in: path
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelGroup"
+      responses:
+        "200":
+          description: get labels response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      description: delete a LabelGroup
+      operationId: deleteLabelGroup
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+        - name: label_group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: get labels response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /label_groups/{label_group_id}/labels:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      description: import labels to label group
+      operationId: importLabels
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "200":
+          description: response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      parameters:
+        - $ref: "#/components/parameters/authParam"
+      description: export labels from label group
+      operationId: exportLabels
+      responses:
+        "200":
+          description: response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /accounts/userinfo:
+    get:
+      description: getUserAccounts
+      operationId: getUserAccounts
+      parameters:
+        - name: username
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: get UserAccounts response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/ProjectPerson"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /accounts/userinfo/{user_id}}:
+    get:
+      description: getUserAccount
+      operationId: getUserAccount
+      parameters:
+        - name: user_id
+          schema:
+            type: string
+          in: path
+          required: true
+      responses:
+        "200":
+          description: get UserAccount response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        $ref: "#/components/schemas/ProjectPerson"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /accounts/permissions:
+    get:
+      description: getPermissions
+      operationId: getPermissions
+      responses:
+        "200":
+          description: get Permissions response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Error"
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          type: string
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  parameters:
+    limitParam:
+      name: _limit
+      in: query
+      schema:
+        type: integer
+      description: when counting objecst, both _limit and _offset are zeros
+    offsetParam:
+      name: _offset
+      in: query
+      schema:
+        type: integer
+      description: when counting objecst, both _limit and _offset are zeros
+    sortParam:
+      name: _sort
+      in: query
+      schema:
+        type: string
+        description: if _sort=-modified,name, it means the studies list will be sorted by modified:desc, then by name:asc
+    queryParam:
+      name: _search
+      in: query
+      schema:
+        type: string
+      # description: Read here https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html
+    aggParam:
+      name: _agg
+      in: query
+      schema:
+        type: string
+        description: aggrerate criteria, return value will be a map<string,int>
+    roleParam:
+      name: _role
+      in: query
+
+      schema:
+        type: string
+        enum: [ANNOTATOR, REVIEWER, PROJECT_OWNER]
+    authParam:
+      name: Authorization
+      in: header
+      schema:
+        type: string
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          enum:
+            - value: 0
+              name: Success
+            - value: -1
+              name: Failed
+            - value: -2
+              name: Invalid Data
+            - value: -3
+              name: Server Error
+        message:
+          type: string
+        count:
+          type: integer
+          format: int32
+          description: size of returned data
+    Annotation:
+      type: object
+      required:
+        - label_id
+        - label_ids
+        - object_id
+        - task_id
+      properties:
+        id:
+          type: string
+          format: uuid
+        label_id:
+          deprecated: true
+          type: string
+          format: uuid
+        label_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        object_id:
+          type: string
+          format: uuid
+        creator_id:
+          type: string
+          format: uuid
+        creator_name:
+          type: string
+        project_id:
+          type: string
+          format: uuid
+        task_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+        data:
+          anyOf:
+            - type: array
+              items:
+                $ref: "#/components/schemas/Point2D"
+            - $ref: "#/components/schemas/Media"
+        type:
+          type: string
+          enum: [BOUNDING_BOX, MASK, POLYGON, TAG]
+        meta:
+          type: object
+          properties:
+            study_instance_uid:
+              type: string
+              format: uuid
+            series_instance_uid:
+              type: string
+              format: uuid
+            sop_instance_uid:
+              type: string
+              format: uuid
+    Label:
+      type: object
+      required:
+        - name
+        - scope
+        - color
+        - label_group_id
+      properties:
+        id:
+          type: string
+          format: uuid
+        parent_label_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        tag:
+          type: string
+        type:
+          type: string
+          enum: [IMPRESSION, FINDING]
+        scope:
+          type: string
+          enum: [STUDY, SERIES, IMAGE]
+        short_name:
+          type: string
+        creator_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+        color:
+          type: string
+        annotation_type:
+          type: string
+          enum: [BOUNDING_BOX, MASK, POLYGON, TAG]
+        label_group_id:
+          type: string
+          format: uuid
+    AnnotationExtend:
+      allOf:
+        - $ref: "#/components/schemas/Annotation"
+        - properties:
+            label:
+              $ref: "#/components/schemas/Label"
+    Project:
+      type: object
+      required:
+        - name
+        - description
+        - label_group_ids
+        - reviewer_ids
+        - project_owners_ids
+        - workflow
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        created:
+          type: integer
+          format: int64
+        creator_id:
+          type: string
+          format: uuid
+        label_group_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        annotator_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        reviewer_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        project_owners_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        workflow:
+          type: string
+          enum: [SINGLE, TRIANGLE]
+        document_link:
+          type: string
+        people:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectPerson"
+        labeling_type:
+          type: string
+          enum: [3D, 2D]
+    Study:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        description:
+          type: string
+        study_instance_id:
+          type: string
+          format: uuid
+        study_sop_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [UNASSIGNED, ASSIGNED, COMPLETED]
+        project_id:
+          type: string
+          format: uuid
+    Point2D:
+      type: object
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+    Media:
+      type: object
+      properties:
+        mime_type:
+          type: string
+        bytes:
+          type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    TaskSubmit:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        assignee_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        study_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        type:
+          type: string
+          enum: [ANNOTATE, REVIEW]
+    TaskAssignment:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        study_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        type:
+          type: string
+          enum: [ANNOTATE, REVIEW]
+        stratergy:
+          type: string
+          enum: [ALL, EQUALLY]
+        source_type:
+          type: array
+          enum: [SELECTED, SEARCH, FILE]
+        study_uids:
+          type: array
+          items:
+            type: string
+        search_query:
+          type: object
+          properties:
+            size:
+              type: integer
+            query:
+              type: string
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        creator_id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        assignee_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [NEW, DOING, COMPLETED]
+        created:
+          type: integer
+          format: int64
+        modified:
+          type: integer
+          format: int64
+        type:
+          type: string
+          enum: [ANNOTATE, REVIEW]
+        comment:
+          type: string
+        archive:
+          description: default value is false
+          type: boolean
+    MapStringToInt:
+      type: object
+      description: a (key, int) map. `default`is an example key
+      additionalProperties:
+        $ref: "#/components/schemas/Pair"
+    Pair:
+      type: object
+      properties:
+        key:
+          type: integer
+    LabelExport:
+      type: object
+      required:
+        - project_id
+        - tag
+      properties:
+        id:
+          type: string
+          format: uuid
+        file_path:
+          type: string
+        parent_label_id:
+          type: string
+          format: uuid
+        creator_id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        tag:
+          type: string
+        created:
+          type: integer
+          format: int64
+    Object:
+      type: object
+      description: |
+        if type=STUDY: study_instance_uid != nil, series_instance_uid = nil, sop_instance_uid = nil
+        if type=SERIES: study_instance_uid != nil, series_instance_uid != nil, sop_instance_uid = nil
+        if type=IMAGE: study_instance_uid != nil, series_instance_uid != nil, sop_instance_uid != nil
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [STUDY, SERIES, IMAGE]
+        project_id:
+          type: string
+          format: uuid
+        study_id:
+          type: string
+          format: uuid
+        meta:
+          type: object
+          properties:
+            study_instance_uid:
+              type: string
+              format: uuid
+            series_instance_uid:
+              type: string
+              format: uuid
+            sop_instance_uid:
+              type: string
+              format: uuid
+    ObjectBig:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        study_id:
+          type: string
+          format: uuid
+        list_study_instance_uid:
+          type: array
+          items:
+            type: string
+            format: uuid
+        list_series_instance_uid:
+          type: array
+          items:
+            type: string
+            format: uuid
+        list_sop_instance_uid:
+          type: array
+          items:
+            type: string
+            format: uuid
+    Session:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/SessionItem"
+        session_id:
+          type: string
+          format: uuid
+        created:
+          type: integer
+          format: int64
+    SessionItem:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [TASK, STUDY]
+        id:
+          type: string
+          format: uuid
+        meta:
+          type: object
+          additionalProperties:
+            type: string
+    LabelGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        color:
+          type: string
+        name:
+          type: string
+        creator_id:
+          type: string
+          format: uuid
+        owner_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+    ProjectPerson:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        roles:
+          type: array
+          items:
+            enum: [ANNOTATOR, REVIEWER, PROJECT_OWNER]
+            type: string

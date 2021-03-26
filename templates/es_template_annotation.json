@@ -1,0 +1,26 @@
+{
+    "index_patterns": [
+        "vinlab_annotations*"
+    ],
+    "template": {
+        "settings": {
+            "number_of_shards": 1
+        },
+        "mappings": {
+            "_source": {
+                "enabled": true
+            },
+            "properties": {
+                "data": {
+                    "enabled": false
+                },
+                "meta.data_spacing": {
+                    "enabled": false
+                },
+                "meta.data_origin": {
+                    "enabled": false
+                }
+            }
+        }
+    }
+}
