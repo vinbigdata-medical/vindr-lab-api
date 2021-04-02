@@ -46,12 +46,12 @@ func ParseJWTAccessToken(apiKey, token string) (*Account, error) {
 
 	if JWT_KEYS == nil {
 		JWT_KEYS = &keycloak.JWTKeys{}
-		*JWT_KEYS = getJWTKeysFromKeycloak(fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/certs",
+		*JWT_KEYS = getJWTKeysFromKeycloak(fmt.Sprintf("%s/auth/realms/%s",
 			viper.GetString("keycloak.uri"), viper.GetString("keycloak.app_realm")))
 		utils.LogDebug(JWT_KEYS.String())
 	}
 
-	isValid, err := VerifyTokenWithPubkey(token, JWT_KEYS.Keys[0].X5C[0])
+	isValid, err := VerifyTokenWithPubkey(token, JWT_KEYS.PublicKey)
 	if err != nil {
 		return nil, err
 	}

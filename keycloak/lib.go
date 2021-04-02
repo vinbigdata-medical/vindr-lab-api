@@ -19,6 +19,11 @@ type JWTKeys struct {
 		X5T     string   `json:"x5t"`
 		X5TS256 string   `json:"x5t#S256"`
 	} `json:"keys"`
+	Realm           string `json:"realm"`
+	PublicKey       string `json:"public_key"`
+	TokenService    string `json:"token-service"`
+	AccountService  string `json:"account-service"`
+	TokensNotBefore int    `json:"tokens-not-before"`
 }
 
 func (jwtKeys *JWTKeys) String() string {
