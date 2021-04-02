@@ -137,7 +137,7 @@ func IsPolytgon(points []Point2D) bool {
 func (antn *Annotation) IsValidAnnotation() bool {
 	fmt.Println(antn.LabelIDs, antn.CreatorID, antn.ObjectID, antn.ProjectID, antn.StudyID, antn.TaskID,
 		antn.IsValidMeta(), antn.IsValidAnnotationType(), antn.IsValidData())
-	if antn.LabelIDs == nil || antn.CreatorID == "" || antn.ObjectID == "" || antn.ProjectID == "" ||
+	if antn.LabelIDs == nil || antn.CreatorID == "" || antn.ProjectID == "" ||
 		antn.StudyID == "" || antn.TaskID == "" ||
 		!antn.IsValidMeta() || !antn.IsValidAnnotationType() || !antn.IsValidData() {
 		return false

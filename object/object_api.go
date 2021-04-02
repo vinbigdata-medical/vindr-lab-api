@@ -103,8 +103,9 @@ func (app *ObjectAPI) DequeueObjects() {
 					utils.LogError(err)
 				}
 			}
+			time.Sleep(10 * time.Millisecond)
 		} else {
-			time.Sleep(2 * time.Second)
+			time.Sleep(1 * time.Second)
 		}
 	}
 }

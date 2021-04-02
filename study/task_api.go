@@ -27,13 +27,15 @@ type TaskAPI struct {
 	logger       *zap.Logger
 }
 
-func NewTaskAPI(taskStore *TaskES, studyStore *StudyES, projectStore *project.ProjectES, antnStore *annotation.AnnotationES, idGenerator *helper.IDGenerator, logger *zap.Logger) (app *TaskAPI) {
+func NewTaskAPI(taskStore *TaskES, studyStore *StudyES, projectStore *project.ProjectES, objectStore *object.ObjectES, antnStore *annotation.AnnotationES, labelStore *annotation.LabelES, idGenerator *helper.IDGenerator, logger *zap.Logger) (app *TaskAPI) {
 	app = &TaskAPI{
 		taskStore:    taskStore,
 		studyStore:   studyStore,
 		projectStore: projectStore,
+		objectStore:  objectStore,
 		idGenerator:  idGenerator,
 		antnStore:    antnStore,
+		labelStore:   labelStore,
 		logger:       logger,
 	}
 	return app
@@ -48,7 +50,7 @@ func (app *TaskAPI) InitRoute(engine *gin.Engine, path string) {
 	group.GET("/:id", mw.ValidPerms(path, mw.PERM_R), app.GetTask)
 	group.PUT("/:id", mw.ValidPerms(path, mw.PERM_U), app.UpdateTask)
 	group.DELETE("/:id", mw.ValidPerms(path, mw.PERM_D), app.DeleteTask)
-	group.PUT("/:id/annotations", mw.ValidPerms(path, mw.PERM_U), app.SetManyAnnotations)
+	group.PUT("/:id/annotations", mw.ValidPerms(path, mw.PERM_U), app.SetManyAnnotationsV2)
 	group.PUT("/:id/status", mw.ValidPerms(path, mw.PERM_U), app.UpdateTaskStatus)
 	group.PUT("/:id/archive", mw.ValidPerms(path, mw.PERM_U), app.ChangeArchiveStatus)
 }
@@ -147,7 +149,7 @@ func (app *TaskAPI) GetTasks(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-func (app *TaskAPI) CreateTaskV2(c *gin.Context) {
+func (app *TaskAPI) CreateTask(c *gin.Context) {
 	resp := entities.NewResponse()
 
 	var ta2 TaskAssignment2
@@ -195,73 +197,6 @@ func (app *TaskAPI) CreateTaskV2(c *gin.Context) {
 			}
 		}
 	}
-
-	c.JSON(http.StatusOK, resp)
-	return
-}
-
-func (app *TaskAPI) CreateTask(c *gin.Context) {
-	resp := entities.NewResponse()
-
-	var taskSubmit TaskSubmit
-	err := c.ShouldBindJSON(&taskSubmit)
-	authInfo := mw.GetAuthInfoFromGin(c)
-
-	if err != nil || !taskSubmit.IsValidTaskSubmit() {
-		resp.ErrorCode = constants.ServerInvalidData
-		c.JSON(http.StatusBadRequest, resp)
-		return
-	}
-
-	mapStudies := make(map[string]Study, 0)
-	app.studyStore.Query(map[string][]string{
-		"_id": taskSubmit.StudyIDs,
-	}, "", 0, constants.DefaultLimit, "", nil, func(studies []Study, es entities.ESReturn) {
-		for i, study := range studies {
-			mapStudies[study.ID] = studies[i]
-		}
-	})
-
-	// tasks := make([]Task, 0)
-	for _, assgineeID := range taskSubmit.AssigneeIDs {
-		for _, studyID := range taskSubmit.StudyIDs {
-			task := Task{}
-			task.CreatorID = authInfo.ID
-			task.StudyCode = mapStudies[studyID].Code
-			task.NewTask(assgineeID, studyID, taskSubmit.ProjectID, taskSubmit.Type)
-			key := "task_" + taskSubmit.ProjectID
-			counter, err := app.idGenerator.GenNew(key)
-			if err != nil {
-				utils.LogError(err)
-				resp.ErrorCode = constants.ServerError
-				c.JSON(http.StatusInternalServerError, resp)
-				return
-			}
-			task.Code = fmt.Sprintf("TSK-%d", counter)
-
-			// tasks = append(tasks, task)
-
-			err = app.taskStore.Create(task)
-			if err != nil {
-				utils.LogError(err)
-				resp.ErrorCode = constants.ServerError
-				c.JSON(http.StatusInternalServerError, resp)
-				return
-			}
-
-			studyID := task.StudyID
-			err1 := app.studyStore.Update(Study{ID: studyID}, kvStr2Inf{
-				"status": constants.StudyStatusAssigned,
-			})
-			if err1 != nil {
-				utils.LogError(err)
-				resp.ErrorCode = constants.ServerError
-				c.JSON(http.StatusInternalServerError, resp)
-				return
-			}
-		}
-	}
-
 	c.JSON(http.StatusOK, resp)
 	return
 }
@@ -380,6 +315,168 @@ func (app *TaskAPI) SetManyAnnotations(c *gin.Context) {
 		}
 	}
 	c.JSON(http.StatusOK, resp)
+}
+
+func (app *TaskAPI) SetManyAnnotationsV2(c *gin.Context) {
+	resp := entities.NewResponse()
+
+	taskID := c.Param(constants.ParamID)
+	if taskID == "" {
+		resp.ErrorCode = constants.ServerInvalidData
+		c.JSON(http.StatusBadRequest, resp)
+		return
+	}
+	task, _, err := app.taskStore.Get(nil, fmt.Sprintf("_id:%s", taskID))
+	if err != nil {
+		utils.LogError(err)
+		resp.ErrorCode = constants.ServerError
+		c.JSON(http.StatusInternalServerError, resp)
+		return
+	}
+	if task.Status == constants.TaskStatusCompleted {
+		utils.LogError(errors.New("Task is completed, cannot overwrite its annotations"))
+		resp.ErrorCode = constants.ServerInvalidData
+		c.JSON(http.StatusBadRequest, resp)
+		return
+	}
+
+	var setManyBody SetManyAnnotationsBody
+	err = c.ShouldBindJSON(&setManyBody)
+	authInfo := mw.GetAuthInfoFromGin(c)
+
+	if err != nil {
+		resp.ErrorCode = constants.ServerInvalidData
+		c.JSON(http.StatusBadRequest, resp)
+		return
+	}
+
+	annotations := setManyBody.Annotations
+	taskComment := setManyBody.Comment
+
+	err = app.taskStore.Update(Task{ID: taskID}, kvStr2Inf{"comment": taskComment})
+	if err != nil {
+		utils.LogError(err)
+		resp.ErrorCode = constants.ServerError
+		c.JSON(http.StatusInternalServerError, resp)
+		return
+	}
+
+	if len(annotations) > 0 {
+
+		unauthorizedAntns := 0
+		mapAntnType2Antns := make(map[string][]annotation.Annotation)
+		deleteIDs := make([]string, 0)
+
+		for i := range annotations {
+			a := annotations[i]
+
+			if a.ID != "" && a.CreatorID != authInfo.ID {
+				unauthorizedAntns++
+				continue
+			}
+
+			switch a.Event {
+			case constants.EventCreate, constants.EventUpdate:
+				if a.ID == "" && a.Event == constants.EventCreate {
+					a.NewAnnotation()
+					a.CreatorID = authInfo.ID
+
+					if a.Type != constants.AntnType3DBox {
+						labelID := a.LabelIDs[0]
+						l, _, err := app.labelStore.Get(nil, fmt.Sprintf("_id:%s", labelID))
+						if err == nil {
+							objectID, err := getObjectIDFromUID(a, l.Scope, *app.objectStore)
+							if err == nil {
+								a.ObjectID = objectID
+							}
+						}
+					} else {
+						objectID, err := getObjectIDFromUID(a, constants.ObjectTypeSeries, *app.objectStore)
+						if err == nil {
+							a.ObjectID = objectID
+						}
+					}
+				}
+
+				if a.IsValidAnnotation() {
+					a.Labels = nil
+					// newAnnotations = append(newAnnotations, annotations[i])
+					mapAntnType2Antns[a.Type] = append(mapAntnType2Antns[a.Type], a)
+				}
+				break
+			case constants.EventDelete:
+				if a.ID != "" {
+					deleteIDs = append(deleteIDs, a.ID)
+				}
+				break
+			default:
+				break
+			}
+
+		}
+		utils.LogInfo("Unable to access %d annotations", unauthorizedAntns)
+
+		for k, newAnnotations := range mapAntnType2Antns {
+			if newAnnotations != nil && len(newAnnotations) > 0 {
+				utils.LogInfo("%s\t%d", k, len(newAnnotations))
+				err := app.antnStore.BulkCreate(newAnnotations)
+				if err != nil {
+					utils.LogError(err)
+					resp.ErrorCode = constants.ServerError
+					c.JSON(http.StatusInternalServerError, resp)
+					return
+				}
+			}
+		}
+
+		if len(deleteIDs) > 0 {
+			utils.LogDebug("%v", deleteIDs)
+			for i := range deleteIDs {
+				err := app.antnStore.Delete(nil, fmt.Sprintf("_id:%s", deleteIDs[i]))
+				if err != nil {
+					utils.LogError(err)
+					resp.ErrorCode = constants.ServerError
+					c.JSON(http.StatusInternalServerError, resp)
+					return
+				}
+			}
+		}
+	}
+	c.JSON(http.StatusOK, resp)
+}
+
+func getObjectIDFromUID(a annotation.Annotation, objectType string, objectES object.ObjectES) (string, error) {
+
+	uid := ""
+	keySearch := ""
+	projectID := a.ProjectID
+
+	switch objectType {
+	case constants.ObjectTypeImage:
+		keySearch = "sop_instance_uid"
+		uid = fmt.Sprintf("%v", a.Meta["masked_sop_instance_uid"])
+		break
+	case constants.ObjectTypeSeries:
+		keySearch = "series_instance_uid"
+		uid = fmt.Sprintf("%v", a.Meta["masked_series_instance_uid"])
+		break
+	case constants.ObjectTypeStudy:
+		keySearch = "study_instance_uid"
+		uid = fmt.Sprintf("%v", a.Meta["masked_study_instance_uid"])
+		break
+	}
+
+	if strings.Contains(uid, projectID) {
+		uid = strings.ReplaceAll(uid, projectID, "")
+		uid = uid[1:]
+	}
+
+	o, _, err := objectES.Get(nil, fmt.Sprintf("project_id:%s AND type.keyword:%s AND meta.%s.keyword:%s", projectID, objectType, keySearch, uid))
+	if err != nil {
+		return "", err
+	}
+	// utils.LogInfo("%s %s %s", uid, keySearch, uid)
+	return o.ID, nil
 }
 
 func (app *TaskAPI) UpdateTask(c *gin.Context) {
