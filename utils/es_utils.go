@@ -45,7 +45,7 @@ func ConvertQueryParamsToMap(context *gin.Context) map[string][]string {
 			continue
 		default:
 			kw := ""
-			if _, isIntField := mapIntFields[k]; !isIntField {
+			if _, isKeywordField := nonKeywordFields[k]; !isKeywordField {
 				kw = ".keyword"
 			}
 
@@ -61,10 +61,11 @@ func ConvertQueryParamsToMap(context *gin.Context) map[string][]string {
 
 type kvStr2Inf = map[string]interface{}
 
-var mapIntFields = map[string]bool{
+var nonKeywordFields = map[string]bool{
 	"created":       true,
 	"time_inserted": true,
 	"modified":      true,
+	"archived":      true,
 }
 
 func MakeSortQuery(sortRaw string) []kvStr2Inf {
@@ -85,7 +86,7 @@ func MakeSortQuery(sortRaw string) []kvStr2Inf {
 			criteria = sort
 		}
 
-		if _, found := mapIntFields[criteria]; !found {
+		if _, found := nonKeywordFields[criteria]; !found {
 			criteria += ".keyword"
 		}
 

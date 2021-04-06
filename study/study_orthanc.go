@@ -40,13 +40,27 @@ func NewStudyOrthanC(uri string) *StudyOrthanC {
 	}
 }
 
-func (orthanc *StudyOrthanC) FindStudy(studyInstanceUID string) (string, error) {
+func (orthanc *StudyOrthanC) FindObjectByUID(scope, uid string) (string, error) {
 	var buf bytes.Buffer
+
+	level := ""
+	switch scope {
+	case "Study":
+		level = "Study"
+		break
+	case "Series":
+		level = "Series"
+		break
+	case "SOP":
+		level = "Instance"
+		break
+	}
+
 	body := &kvStr2Inf{
-		"Level": "Study",
+		"Level": level,
 		"Limit": 100,
 		"Query": kvStr2Inf{
-			"StudyInstanceUID": studyInstanceUID,
+			fmt.Sprintf("%sInstanceUID", scope): uid,
 		},
 	}
 	if err := json.NewEncoder(&buf).Encode(body); err != nil {
@@ -79,7 +93,7 @@ func (orthanc *StudyOrthanC) FindStudy(studyInstanceUID string) (string, error) 
 }
 
 func (orthanc *StudyOrthanC) DeleteDicomFile(studyOrthanC *StudyOrthanC, s Study) error {
-	orthancStudyID, err := studyOrthanC.FindStudy(fmt.Sprintf("%s.%s", s.ProjectID, s.DICOMTags.StudyInstanceUID[0]))
+	orthancStudyID, err := studyOrthanC.FindObjectByUID("Study", fmt.Sprintf("%s.%s", s.ProjectID, s.DICOMTags.StudyInstanceUID[0]))
 	if err != nil {
 		utils.LogError(err)
 		return err
@@ -111,8 +125,31 @@ func (orthanc *StudyOrthanC) DeleteStudy(orthancStudyID string) error {
 	return nil
 }
 
-func (orthanc *StudyOrthanC) GetInstances(orthancStudyID string) (*[]entities.OrthancInstance, error) {
+func (orthanc *StudyOrthanC) GetInstancesByStudy(orthancStudyID string) (*[]entities.OrthancInstance, error) {
 	uri := fmt.Sprintf("%s/studies/%s/instances", orthanc.uri, orthancStudyID)
+	req, err := http.NewRequest("GET", uri, nil)
+	if err != nil {
+		return nil, err
+	}
+	res, err := orthanc.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	tags := make([]entities.OrthancInstance, 0)
+	if err := json.NewDecoder(res.Body).Decode(&tags); err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, errors.New(res.Status)
+	}
+
+	return &tags, nil
+}
+
+func (orthanc *StudyOrthanC) GetInstancesBySeries(orthancStudyID string) (*[]entities.OrthancInstance, error) {
+	uri := fmt.Sprintf("%s/series/%s/instances", orthanc.uri, orthancStudyID)
 	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		return nil, err

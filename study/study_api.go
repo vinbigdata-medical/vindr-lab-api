@@ -103,7 +103,7 @@ func (app *StudyAPI) GetStudy(c *gin.Context) {
 		return
 	}
 
-	oStudyID, err := app.studyOrthanC.FindStudy(fmt.Sprintf("%s.%s", study.ProjectID, study.DICOMTags.StudyInstanceUID[0]))
+	oStudyID, err := app.studyOrthanC.FindObjectByUID("Study", fmt.Sprintf("%s.%s", study.ProjectID, study.DICOMTags.StudyInstanceUID[0]))
 	if err != nil {
 		utils.LogError(err)
 		resp.ErrorCode = constants.ServerError
