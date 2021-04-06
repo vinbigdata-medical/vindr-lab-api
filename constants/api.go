@@ -72,6 +72,9 @@ const (
 	LabelSelectTypeRadio    = "RADIO"
 	LabelSelectTypeCheckbox = "CHECKBOX"
 
+	ExportStatusPending = "PENDING"
+	ExportStatusDone    = "DONE"
+
 	ASSIGN_STRATEGY_ALL     = "ALL"
 	ASSIGN_STRATEGY_EQUALLY = "EQUALLY"
 

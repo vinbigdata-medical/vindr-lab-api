@@ -118,205 +118,214 @@ func (app *StatsAPI) CreateExportLabel(c *gin.Context) {
 		return
 	}
 
-	labelGroupIDs := project.LabelGroupIDs
-
-	labelGroupsReturn, _, err := app.labelGroupStore.GetSlice(map[string][]string{
-		"_id": labelGroupIDs,
-	}, "", 0, constants.DefaultLimit, "", nil)
-	if err != nil {
-		utils.LogError(err)
-		resp.ErrorCode = constants.ServerError
-		c.JSON(http.StatusInternalServerError, resp)
-		return
-	}
-
-	labelsReturn := make([]annotation.Label, 0)
-	mapLabelImps := make(map[string]bool)
-	mapLabelFind := make(map[string]bool)
-
-	utils.LogInfo("Get labels")
-	app.labelStore.Query(map[string][]string{"label_group_id.keyword": labelGroupIDs}, "", 0, constants.DefaultLimit, "", nil,
-		func(labels []annotation.Label, esReturn entities.ESReturn) {
-			for i, label := range labels {
-				if _, found := utils.FindInSlice(labelGroupIDs, label.LabelGroupID); found {
-					labelsReturn = append(labelsReturn, labels[i])
-					switch label.Type {
-					case "IMPRESSION":
-						mapLabelImps[label.ID] = true
-						break
-					case "FINDING":
-						mapLabelFind[label.ID] = true
-						break
-					}
-				}
-			}
-		})
-
-	utils.LogInfo("Get and map Annotations by types, Get comments")
-
-	mapA8sImps := make(map[string]annotation.Annotation)
-	mapA8sFind := make(map[string]annotation.Annotation)
-	comments := make([]map[string]interface{}, 0)
-
-	mapID2User, err := app.kcStore.GetAccountsAsMap("")
-	if err != nil {
-		utils.LogError(err)
-	}
-
-	totalTasks := 0
-	app.studyStore.Query(nil, fmt.Sprintf("project_id.keyword:%s", projectID), 0, constants.DefaultLimit*10, "", nil, func(studies []study.Study, es entities.ESReturn) {
-		utils.LogInfo("size of tasks: %d", totalTasks)
-		for _, s := range studies {
-			app.taskStore.Query(nil, fmt.Sprintf("project_id.keyword:%s AND study_id.keyword:%s AND type.keyword:%s AND status.keyword:%s",
-				projectID, s.ID, constants.TaskTypeReview, constants.TaskStatusCompleted),
-				0, constants.DefaultLimit, "", nil, func(tasks []study.Task, es entities.ESReturn) {
-
-					totalTasks += len(tasks)
-					taskIDs := make([]string, 0)
-
-					for _, task := range tasks {
-						taskIDs = append(taskIDs, task.ID)
-
-						if task.Comment != "" {
-							o, _, err := app.objectStore.Get(nil, fmt.Sprintf("study_id.keyword:%s", task.StudyID))
-							if err != nil {
-								utils.LogError(err)
-							} else {
-								comments = append(comments, map[string]interface{}{
-									"id":         task.ID,
-									"object_id":  o.ID,
-									"creator_id": task.AssigneeID,
-									"content":    task.Comment,
-								})
-							}
-						}
-					}
-
-					if len(taskIDs) > 0 {
-						app.antnStore.Query(map[string][]string{
-							"task_id.keyword": taskIDs,
-						}, "", 0, constants.DefaultLimit, "", nil,
-							func(antns []annotation.Annotation, e entities.ESReturn) {
-								for i := range antns {
-									antn := antns[i]
-									if mapID2User[antn.CreatorID] != nil && antn.CreatorName == "" {
-										antn.CreatorName = mapID2User[antn.CreatorID].Username
-									}
-
-									for _, labelID := range antn.LabelIDs {
-										if _, found := mapLabelImps[labelID]; found {
-											mapA8sImps[antn.ID] = antn
-										}
-										if _, found := mapLabelFind[labelID]; found {
-											mapA8sFind[antn.ID] = antn
-										}
-									}
-								}
-							})
-					}
-				})
-		}
-
-	})
-	utils.LogInfo("size of tasks: %d", totalTasks)
-
-	antnImps := make([]annotation.Annotation, 0)
-	antnFind := make([]annotation.Annotation, 0)
-	for _, v := range mapA8sImps {
-		antnImps = append(antnImps, v)
-	}
-	for _, v := range mapA8sFind {
-		antnFind = append(antnFind, v)
-	}
-
-	utils.LogInfo("Get and return objects")
-	mapObjectTypeCount := make(map[string]int)
-	objectsRet := make([]object.Object, 0)
-	studyCount := 0
-	studiesRet := make([]map[string]interface{}, 0)
-
-	app.studyStore.Query(nil, fmt.Sprintf("project_id.keyword:%s", projectID),
-		0, constants.DefaultLimit, "", nil, func(studies []study.Study, es entities.ESReturn) {
-			studyCount += len(studies)
-
-			for _, study := range studies {
-				err := app.objectStore.Query(nil, fmt.Sprintf("project_id.keyword:%s AND study_id.keyword:%s", projectID, study.ID),
-					0, constants.DefaultLimit, "", nil, func(objects []object.Object, es entities.ESReturn) {
-						objectsRet = append(objectsRet, objects...)
-
-						for _, object := range objects {
-							mapObjectTypeCount[object.Type]++
-							if object.Type == constants.ObjectTypeStudy {
-								studiesRet = append(studiesRet, map[string]interface{}{
-									"object_id": object.ID,
-									"code":      study.Code,
-									"status":    study.Status,
-								})
-							}
-						}
-					})
-
-				if err != nil {
-					utils.LogError(err)
-				}
-			}
-		})
-	utils.LogInfo("%d\t%v", studyCount, mapObjectTypeCount)
-
-	utils.LogInfo("Get and return archived objects")
-	mapArchives := make(map[string]bool)
-	listArchives := make([]string, 0)
-	acrhivedTask := 0
-	app.taskStore.Query(nil, fmt.Sprintf("project_id.keyword:%s AND archived:%v", projectID, true), 0, constants.DefaultLimit,
-		"", nil, func(tasks []study.Task, es entities.ESReturn) {
-			acrhivedTask += len(tasks)
-			for _, t := range tasks {
-				app.objectStore.Query(nil, fmt.Sprintf("project_id.keyword:%s AND study_id.keyword:%s AND type.keyword:STUDY", projectID, t.StudyID), 0, 10, "", nil, func(objects []object.Object, es entities.ESReturn) {
-					if len(objects) == 0 {
-						utils.LogInfo("error")
-					}
-					for _, o := range objects {
-						mapArchives[o.ID] = true
-					}
-				})
-			}
-		})
-	for k := range mapArchives {
-		listArchives = append(listArchives, k)
-	}
-	utils.LogInfo("%d-%d", acrhivedTask, len(listArchives))
-
-	utils.LogInfo("Link result to return map")
-	exportFile := make(map[string]interface{})
-	exportFile["label_groups"] = labelGroupsReturn
-	exportFile["impression"] = antnImps
-	exportFile["finding"] = antnFind
-	exportFile["labels"] = labelsReturn
-	exportFile["objects"] = objectsRet
-	exportFile["studies"] = studiesRet
-	exportFile["comments"] = comments
-	exportFile["archives"] = listArchives
-
-	// fmt.Println(exportFile)
-	bytes, _ := json.Marshal(exportFile)
-
-	utils.LogInfo("Store file to minio")
-	err1 := app.minioClient.StoreFile(labelExport.Tag, bytes)
-	if err1 != nil {
-		utils.LogError(err)
-		resp.ErrorCode = constants.ServerError
-		c.JSON(http.StatusInternalServerError, resp)
-		return
-	}
-
 	utils.LogInfo("Create es object")
 	app.labelExportStore.Create(labelExport)
 
-	resp.Data = kvStr2Inf{
-		constants.ParamID: labelExport.ID,
-	}
+	go func() {
+
+		labelGroupIDs := project.LabelGroupIDs
+
+		labelGroupsReturn, _, err := app.labelGroupStore.GetSlice(map[string][]string{
+			"_id": labelGroupIDs,
+		}, "", 0, constants.DefaultLimit, "", nil)
+		if err != nil {
+			utils.LogError(err)
+			resp.ErrorCode = constants.ServerError
+			c.JSON(http.StatusInternalServerError, resp)
+			return
+		}
+
+		labelsReturn := make([]annotation.Label, 0)
+		mapLabelImps := make(map[string]bool)
+		mapLabelFind := make(map[string]bool)
+
+		utils.LogInfo("Get labels")
+		app.labelStore.Query(map[string][]string{"label_group_id.keyword": labelGroupIDs}, "", 0, constants.DefaultLimit, "", nil,
+			func(labels []annotation.Label, esReturn entities.ESReturn) {
+				for i, label := range labels {
+					if _, found := utils.FindInSlice(labelGroupIDs, label.LabelGroupID); found {
+						labelsReturn = append(labelsReturn, labels[i])
+						switch label.Type {
+						case "IMPRESSION":
+							mapLabelImps[label.ID] = true
+							break
+						case "FINDING":
+							mapLabelFind[label.ID] = true
+							break
+						}
+					}
+				}
+			})
+
+		utils.LogInfo("Get and map Annotations by types, Get comments")
+
+		mapA8sImps := make(map[string]annotation.Annotation)
+		mapA8sFind := make(map[string]annotation.Annotation)
+		comments := make([]map[string]interface{}, 0)
+
+		mapID2User, err := app.kcStore.GetAccountsAsMap("")
+		if err != nil {
+			utils.LogError(err)
+		}
+
+		totalTasks := 0
+		app.studyStore.Query(nil, fmt.Sprintf("project_id.keyword:%s", projectID), 0, constants.DefaultLimit*10, "", nil, func(studies []study.Study, es entities.ESReturn) {
+			utils.LogInfo("size of tasks: %d", totalTasks)
+			for _, s := range studies {
+				app.taskStore.Query(nil, fmt.Sprintf("project_id.keyword:%s AND study_id.keyword:%s AND type.keyword:%s AND status.keyword:%s",
+					projectID, s.ID, constants.TaskTypeReview, constants.TaskStatusCompleted),
+					0, constants.DefaultLimit, "", nil, func(tasks []study.Task, es entities.ESReturn) {
+
+						totalTasks += len(tasks)
+						taskIDs := make([]string, 0)
+
+						for _, task := range tasks {
+							taskIDs = append(taskIDs, task.ID)
+
+							if task.Comment != "" {
+								o, _, err := app.objectStore.Get(nil, fmt.Sprintf("study_id.keyword:%s", task.StudyID))
+								if err != nil {
+									utils.LogError(err)
+								} else {
+									comments = append(comments, map[string]interface{}{
+										"id":         task.ID,
+										"object_id":  o.ID,
+										"creator_id": task.AssigneeID,
+										"content":    task.Comment,
+									})
+								}
+							}
+						}
+
+						if len(taskIDs) > 0 {
+							app.antnStore.Query(map[string][]string{
+								"task_id.keyword": taskIDs,
+							}, "", 0, constants.DefaultLimit, "", nil,
+								func(antns []annotation.Annotation, e entities.ESReturn) {
+									for i := range antns {
+										antn := antns[i]
+										if mapID2User[antn.CreatorID] != nil && antn.CreatorName == "" {
+											antn.CreatorName = mapID2User[antn.CreatorID].Username
+										}
+
+										for _, labelID := range antn.LabelIDs {
+											if _, found := mapLabelImps[labelID]; found {
+												mapA8sImps[antn.ID] = antn
+											}
+											if _, found := mapLabelFind[labelID]; found {
+												mapA8sFind[antn.ID] = antn
+											}
+										}
+									}
+								})
+						}
+					})
+			}
+
+		})
+		utils.LogInfo("size of tasks: %d", totalTasks)
+
+		antnImps := make([]annotation.Annotation, 0)
+		antnFind := make([]annotation.Annotation, 0)
+		for _, v := range mapA8sImps {
+			antnImps = append(antnImps, v)
+		}
+		for _, v := range mapA8sFind {
+			antnFind = append(antnFind, v)
+		}
+
+		utils.LogInfo("Get and return objects")
+		mapObjectTypeCount := make(map[string]int)
+		objectsRet := make([]object.Object, 0)
+		studyCount := 0
+		studiesRet := make([]map[string]interface{}, 0)
+
+		app.studyStore.Query(nil, fmt.Sprintf("project_id.keyword:%s", projectID),
+			0, constants.DefaultLimit, "", nil, func(studies []study.Study, es entities.ESReturn) {
+				studyCount += len(studies)
+
+				for _, study := range studies {
+					err := app.objectStore.Query(nil, fmt.Sprintf("project_id.keyword:%s AND study_id.keyword:%s", projectID, study.ID),
+						0, constants.DefaultLimit, "", nil, func(objects []object.Object, es entities.ESReturn) {
+							objectsRet = append(objectsRet, objects...)
+
+							for _, object := range objects {
+								mapObjectTypeCount[object.Type]++
+								if object.Type == constants.ObjectTypeStudy {
+									studiesRet = append(studiesRet, map[string]interface{}{
+										"object_id": object.ID,
+										"code":      study.Code,
+										"status":    study.Status,
+									})
+								}
+							}
+						})
+
+					if err != nil {
+						utils.LogError(err)
+					}
+				}
+			})
+		utils.LogInfo("%d\t%v", studyCount, mapObjectTypeCount)
+
+		utils.LogInfo("Get and return archived objects")
+		mapArchives := make(map[string]bool)
+		listArchives := make([]string, 0)
+		acrhivedTask := 0
+		app.taskStore.Query(nil, fmt.Sprintf("project_id.keyword:%s AND archived:%v", projectID, true), 0, constants.DefaultLimit,
+			"", nil, func(tasks []study.Task, es entities.ESReturn) {
+				acrhivedTask += len(tasks)
+				for _, t := range tasks {
+					app.objectStore.Query(nil, fmt.Sprintf("project_id.keyword:%s AND study_id.keyword:%s AND type.keyword:STUDY", projectID, t.StudyID), 0, 10, "", nil, func(objects []object.Object, es entities.ESReturn) {
+						if len(objects) == 0 {
+							utils.LogInfo("error")
+						}
+						for _, o := range objects {
+							mapArchives[o.ID] = true
+						}
+					})
+				}
+			})
+		for k := range mapArchives {
+			listArchives = append(listArchives, k)
+		}
+		utils.LogInfo("%d-%d", acrhivedTask, len(listArchives))
+
+		utils.LogInfo("Link result to return map")
+		exportFile := make(map[string]interface{})
+		exportFile["label_groups"] = labelGroupsReturn
+		exportFile["impression"] = antnImps
+		exportFile["finding"] = antnFind
+		exportFile["labels"] = labelsReturn
+		exportFile["objects"] = objectsRet
+		exportFile["studies"] = studiesRet
+		exportFile["comments"] = comments
+		exportFile["archives"] = listArchives
+
+		// fmt.Println(exportFile)
+		bytes, _ := json.Marshal(exportFile)
+
+		utils.LogInfo("Store file to minio")
+		err1 := app.minioClient.StoreFile(labelExport.Tag, bytes)
+		if err1 != nil {
+			utils.LogError(err)
+			resp.ErrorCode = constants.ServerError
+			c.JSON(http.StatusInternalServerError, resp)
+			return
+		}
+
+		resp.Data = kvStr2Inf{
+			constants.ParamID: labelExport.ID,
+		}
+
+		utils.LogInfo("Update es object")
+		labelExport.Status = constants.ExportStatusDone
+		app.labelExportStore.Create(labelExport)
+	}()
 
 	c.JSON(http.StatusOK, resp)
+
+	return
 }
 
 func (app *StatsAPI) GetStatsLabelsByAgg(c *gin.Context) {

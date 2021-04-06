@@ -3,6 +3,7 @@ package stats
 import (
 	"encoding/json"
 	"time"
+	"vindr-lab-api/constants"
 
 	"github.com/google/uuid"
 )
@@ -27,4 +28,5 @@ func (labelExport *LabelExport) New() {
 	labelExport.ID = uuid.New().String()
 	labelExport.Created = time.Now().UnixNano() / int64(time.Millisecond)
 	labelExport.FilePath = labelExport.Tag + ".json"
+	labelExport.Status = constants.ExportStatusPending
 }
