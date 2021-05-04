@@ -165,7 +165,7 @@ func main() {
 	projectAPI := project.NewProjectAPI(projectStore, logger)
 	projectAPI.InitRoute(route, "projects")
 
-	taskAPI := study.NewTaskAPI(taskStore, studyStore, projectStore, antnStore, idGenerator, logger)
+	taskAPI := study.NewTaskAPI(taskStore, studyStore, projectStore, objectStore, antnStore, labelStore, idGenerator, logger)
 	taskAPI.InitRoute(route, "tasks")
 
 	objectAPI := object.NewObjectAPI(objectStore, lockerRedis, logger)

@@ -11,6 +11,7 @@ import (
 	"vindr-lab-api/entities"
 	"vindr-lab-api/helper"
 	"vindr-lab-api/mw"
+	"vindr-lab-api/object"
 	"vindr-lab-api/project"
 	"vindr-lab-api/utils"
 
@@ -21,8 +22,10 @@ import (
 type TaskAPI struct {
 	taskStore    *TaskES
 	studyStore   *StudyES
+	objectStore  *object.ObjectES
 	projectStore *project.ProjectES
 	antnStore    *annotation.AnnotationES
+	labelStore   *annotation.LabelES
 	idGenerator  *helper.IDGenerator
 	logger       *zap.Logger
 }
@@ -44,7 +47,7 @@ func NewTaskAPI(taskStore *TaskES, studyStore *StudyES, projectStore *project.Pr
 func (app *TaskAPI) InitRoute(engine *gin.Engine, path string) {
 	group := engine.Group(path, mw.WrapAuthInfo(app.logger))
 	group.GET("", mw.ValidPerms(path, mw.PERM_R), app.GetTasks)
-	group.POST("/assign", mw.ValidPerms(path, mw.PERM_C), app.CreateTaskV2)
+	group.POST("/assign", mw.ValidPerms(path, mw.PERM_C), app.CreateTask)
 	group.POST("/delete_many", mw.ValidPerms(path, mw.PERM_D), app.DeleteTasks)
 	group.POST("/update_status_many", mw.ValidPerms(path, mw.PERM_U), app.UpdateTasksStatus)
 	group.GET("/:id", mw.ValidPerms(path, mw.PERM_R), app.GetTask)
