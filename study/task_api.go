@@ -22,11 +22,11 @@ import (
 type TaskAPI struct {
 	taskStore    *TaskES
 	studyStore   *StudyES
-	objectStore  *object.ObjectES
 	projectStore *project.ProjectES
 	antnStore    *annotation.AnnotationES
 	labelStore   *annotation.LabelES
 	idGenerator  *helper.IDGenerator
+	objectStore  *object.ObjectES
 	logger       *zap.Logger
 }
 

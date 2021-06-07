@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"vindr-lab-api/account"
 	"vindr-lab-api/annotation"
@@ -171,6 +172,7 @@ func main() {
 	objectAPI := object.NewObjectAPI(objectStore, lockerRedis, logger)
 	objectAPI.InitRoute(route, "objects")
 	go objectAPI.DequeueObjects()
+	time.Sleep(1 * time.Millisecond)
 
 	stats := stats.NewLabelExportAPI(labelExportStore, labelGroupStore, labelStore, projectStore, antnStore, objectStore, studyStore, taskStore,
 		minioStorage, keycloakStore, logger)
