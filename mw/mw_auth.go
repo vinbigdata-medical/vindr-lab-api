@@ -14,8 +14,8 @@ import (
 	"vindr-lab-api/keycloak"
 	"vindr-lab-api/utils"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
