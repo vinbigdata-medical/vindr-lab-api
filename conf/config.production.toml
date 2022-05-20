@@ -1,5 +1,6 @@
 [webserver]
 port = 8088
+api_key="YOUR_API_KEY"
 
 [elasticsearch]
 uris = ["YOUR_ES_URI"]

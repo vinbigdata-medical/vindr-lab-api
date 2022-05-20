@@ -21,7 +21,7 @@ import (
 )
 
 var GIN_CONTEXT_AUTHINFO = "AuthInfo"
-var DEFAULT_API_KEY = "YOUR_SECRET_API_KEY"
+var DEFAULT_API_KEY = viper.GetString("webserver.api_key")
 var JWT_KEYS *keycloak.JWTKeys
 
 func getJWTKeysFromKeycloak(uri string) keycloak.JWTKeys {
